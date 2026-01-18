@@ -1,78 +1,45 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { 
-  Container, 
-  Paper, 
-  TextField, 
-  Button, 
-  Typography, 
-  Box, 
-  IconButton, 
-  InputAdornment, 
-  Alert, 
-  CircularProgress, 
-  Link, 
-  Fade, 
-  Grid 
-} from "@mui/material";
-import { Email, Person } from "@mui/icons-material";
+import {Container,Paper,TextField,Button,Typography,Box,IconButton,InputAdornment,Alert,CircularProgress,Link,Fade,Grid } from 
+"@mui/material";
+import { Email } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import axios from 'axios';
+import {toast} from 'sonner'
+import {isAuth,storeData} from '../../utils/helper';
+const url = import.meta.env.VITE_bACKEND_URL;
 
 const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate()
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset
-  } = useForm({
-    defaultValues: {
-      name: "",
-      email: ""
-    }
-  });
+  const { register, handleSubmit, formState: { errors }, reset } = useForm({ defaultValues: { email: "" } });
 
   const onSubmit = async (data) => {
     setError("");
     setLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
-      if (
-        data.email === "demo@example.com" &&
-        data.name === "John Doe"
-      ) {
-        console.log("Login successful!", data);
-        alert("Login successful! Check console for details.");
-        reset(); // Clear form after successful login
-      } else {
-        setError(
-          "Invalid credentials. Use demo@example.com / John Doe"
-        );
+    try{
+      const res = await axios.post(`${url}login`,data)
+      if(res?.status===200){
+        toast.success(res?.data?.message)
+        storeData(res?.data?.user)
+        setLoading(false);
+        navigate('/')
       }
+    }
+    catch(err){
+      toast.error(err?.response?.data?.error);
       setLoading(false);
-    }, 1500);
+    }
   };
 
   return (
     <Container maxWidth="lg" sx={{display:"flex",justifyContent:"center"}}>
       <Grid container sx={{ minHeight: "80vh" }}>
         {/* Login Form */}
-        <Grid
-          item
-          xs={12}
-          md={6}
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            p: { xs: 1, sm: 4, md: 6 },
-          }}
-        >
+        <Grid item xs={12} md={6}
+          sx={{display: "flex",flexDirection: "column",justifyContent: "center",alignItems: "center",p: { xs: 1, sm: 4, md: 6 },}} >
           <Paper
             elevation={0}
             sx={{
@@ -110,39 +77,6 @@ const LoginPage = () => {
             )}
 
             <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
-              {/* Name Field */}
-              <TextField
-                fullWidth
-                label="Full Name"
-                {...register("name", {
-                  required: "Name is required",
-                  minLength: {
-                    value: 2,
-                    message: "Name must be at least 2 characters"
-                  },
-                  maxLength: {
-                    value: 50,
-                    message: "Name must not exceed 50 characters"
-                  },
-                  pattern: {
-                    value: /^[A-Za-z\s]+$/,
-                    message: "Name can only contain letters and spaces"
-                  }
-                })}
-                margin="normal"
-                required
-                disabled={loading}
-                error={!!errors.name}
-                helperText={errors.name?.message}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Person color="action" />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{ mb: 2 }}
-              />
 
               {/* Email Field */}
               <TextField

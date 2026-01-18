@@ -1,56 +1,82 @@
-import React from 'react'
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
+import React, { useEffect, useMemo, useState } from "react";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Paper from "@mui/material/Paper";
+import { toast, useSonner } from "sonner";
+import { getStoredData } from "../../utils/helper";
+import axios from "axios";
+const url = import.meta.env.VITE_bACKEND_URL;
 
-function createData(name, calories, fat, carbs, protein) {
-  return { name, calories, fat, carbs, protein };
-}
-
-const rows = [
-  createData('Frozen yoghurt', 159, 6.0, 24, 4.0),
-  createData('Ice cream sandwich', 237, 9.0, 37, 4.3),
-  createData('Eclair', 262, 16.0, 24, 6.0),
-  createData('Cupcake', 305, 3.7, 67, 4.3),
-  createData('Gingerbread', 356, 16.0, 49, 3.9),
-];
 
 const Report = () => {
+  const [reportData, setReportData] = useState([]);
+  const getReport = async (userId) => {
+    try {
+      const reportResponse = await axios.post(
+        `${url}getreport`,
+        { userId },
+      );
+
+      if(reportResponse?.status===200){ setReportData(reportResponse?.data[0]?.report) }
+    } catch (err) {
+      // toast.error(er)
+    }
+  };
+
+  const rows = useMemo(
+    () =>
+      reportData?.map((rd, i) => ({
+        id: i + 1,
+        title: rd.Title,
+        category: rd.Category,
+        amount: rd.Amount,
+        date: new Date(rd.Date).toLocaleDateString(),
+      })) || [],
+    [reportData],
+  );
+
+  useEffect(() => {
+    const userId = getStoredData()._id;
+    if (userId) {
+      getReport(userId);
+    }
+  }, []);
+
   return (
-     <TableContainer component={Paper} sx={{ marginTop:"2rem"}}>
+    <TableContainer component={Paper} sx={{ marginTop: "2rem" }}>
       <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
         <TableHead>
           <TableRow>
-            <TableCell>Category</TableCell>
-            <TableCell align="right">Date</TableCell>
-            <TableCell align="right">Time</TableCell>
-            <TableCell align="right">Budget</TableCell>
-            <TableCell align="right">Amount</TableCell>
+            <TableCell>id</TableCell>
+            <TableCell align="right">title</TableCell>
+            <TableCell align="right">category</TableCell>
+            <TableCell align="right">amount</TableCell>
+            <TableCell align="right">date</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {rows.map((row) => (
             <TableRow
               key={row.name}
-              sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+              sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
             >
               <TableCell component="th" scope="row">
-                {row.name}
+                {row.id}
               </TableCell>
-              <TableCell align="right">{row.calories}</TableCell>
-              <TableCell align="right">{row.fat}</TableCell>
-              <TableCell align="right">{row.carbs}</TableCell>
-              <TableCell align="right">{row.protein}</TableCell>
+              <TableCell align="right">{row.title}</TableCell>
+              <TableCell align="right">{row.category}</TableCell>
+              <TableCell align="right">{row.amount}</TableCell>
+              <TableCell align="right">{row.date}</TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
     </TableContainer>
-  )
-}
+  );
+};
 
-export default Report
+export default Report;

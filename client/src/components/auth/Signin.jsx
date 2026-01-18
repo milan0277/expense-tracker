@@ -1,62 +1,40 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { 
-  Container, 
-  Paper, 
-  TextField, 
-  Button, 
-  Typography, 
-  Box, 
-  InputAdornment, 
-  Alert, 
-  CircularProgress, 
-  Link, 
-  Fade, 
-  Grid,
-  FormControl,
-  InputLabel,
-  OutlinedInput
-} from "@mui/material";
+import {Container,Paper,TextField,Button,Typography,Box,InputAdornment,Alert,CircularProgress,Link,Fade,Grid,FormControl,InputLabel,
+  OutlinedInput} from "@mui/material";
 import { Email, Person, AttachMoney } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import axios from 'axios';
+import {toast} from 'sonner'
+const url = import.meta.env.VITE_bACKEND_URL;
+
 
 const SignupPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate()
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset
-  } = useForm({
-    defaultValues: {
-      name: "",
-      email: "",
-      monthlyBudget: ""
-    }
+  const { register, handleSubmit, formState: { errors }, reset } = useForm({
+    defaultValues: {name: "", email: "", monthlyBudget: 0}
   });
 
   const onSubmit = async (data) => {
     setError("");
     setLoading(true);
 
-    // Simulate API call for signup
-    setTimeout(() => {
-      console.log("New account created:", {
-        name: data.name,
-        email: data.email,
-        monthlyBudget: parseFloat(data.monthlyBudget) || 0
-      });
+    try{
+      const res = await axios.post(`${url}createuser`,{name:data.name,email:data.email,budget:data.monthlyBudget})
+      if(res?.status===201){
+        setLoading(false)
+        toast.success(res?.data?.message || "user created successfully");
+        navigate('/login')
+      }
       
-      alert("Account created successfully! You can now log in.");
-      reset();
-      setLoading(false);
-      
-      // In a real app, you would redirect to login or dashboard
-      // navigate('/login');
-    }, 1500);
+    }
+    catch(err){
+      toast.error(err?.response?.data?.error);
+      setLoading(false)
+    }
   };
 
   return (
@@ -158,17 +136,10 @@ const SignupPage = () => {
                     message: "Please enter a valid email address"
                   }
                 })}
-                margin="normal"
-                required
-                disabled={loading}
-                error={!!errors.email}
+                margin="normal" required disabled={loading} error={!!errors.email}
                 helperText={errors.email?.message}
                 InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Email color="action" />
-                    </InputAdornment>
-                  ),
+                  startAdornment: (<InputAdornment position="start"><Email color="action" /></InputAdornment>),
                 }}
                 sx={{ mb: 2 }}
               />
@@ -181,31 +152,13 @@ const SignupPage = () => {
                   label="Monthly Budget"
                   {...register("monthlyBudget", {
                     required: "Monthly budget is required",
-                    min: {
-                      value: 0,
-                      message: "Budget must be 0 or greater"
-                    },
-                    max: {
-                      value: 1000000,
-                      message: "Budget is too high"
-                    },
-                    pattern: {
-                      value: /^\d+(\.\d{1,2})?$/,
-                      message: "Enter a valid amount (max 2 decimal places)"
-                    }
+                    min: {value: 0,message: "Budget must be 0 or greater"},
+                    max: {value: 1000000,message: "Budget is too high"},
+                    pattern: {value: /^\d+(\.\d{1,2})?$/,message: "Enter a valid amount (max 2 decimal places)"}
                   })}
-                  startAdornment={
-                    <InputAdornment position="start">
-                      <AttachMoney color="action" />
-                    </InputAdornment>
-                  }
+                  startAdornment={<InputAdornment position="start">₹</InputAdornment>}
                   type="number"
-                  inputProps={{
-                    step: "0.01",
-                    min: "0",
-                    max: "1000000",
-                    placeholder: "0.00"
-                  }}
+                  inputProps={{step: 1,min: 0,max: 1000000,placeholder: 0}}
                   disabled={loading}
                 />
                 {errors.monthlyBudget && (
